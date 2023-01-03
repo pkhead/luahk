@@ -1,4 +1,5 @@
 #ifndef _FILE_DEFINED
+// this is set in order to redirect stdout properly
 struct __iobuf {
 	char* _ptr;
 	int _cnt;
@@ -33,14 +34,14 @@ typedef struct __iobuf FILE_COMPLETE;
 #define MENU_SHOWCONSOLE 1001
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK TextboxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT keyboardProc(int code, WPARAM wParam, LPARAM lParam);
 
+// these are defined in main.cpp
+extern bool APP_THROTTLING;
 extern void APP_SETUP(HWND hwnd, int argc, const char* argv[]);
 extern void APP_END();
 extern void APP_UPDATE();
 extern void APP_HOTKEY(int id);
-
 extern void APP_KBHOOK(int state, int keycode, bool repeat);
 
 std::string utf8_encode(const std::wstring& wstr)
@@ -67,11 +68,11 @@ int main(int argc, const char* argv[]) {
 #else
 // if building as a Windows application
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nShowCmd) {
-	int argc;
-	LPWSTR* _wArgv = CommandLineToArgvW(lpCmdLine, &argc);
-
 	_hInstance = hInstance;
 
+	// parse arguments into argc and argv
+	int argc;
+	LPWSTR* _wArgv = CommandLineToArgvW(lpCmdLine, &argc);
 	const char** argv = NULL;
 
 	if (argc > 0) {
@@ -110,18 +111,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
 		setvbuf(stdout, NULL, _IONBF, 0);
 
 		_stdoutfd = fd;
-
-		//const char* in = "Hello, world!";
-		//DWORD written;
-		//WriteFile(Stdout_w, in, sizeof(in), &written, NULL);
-		
-		/*
-		if (!ReadFile(Stdout_r, buf, 64, &read, NULL)) {
-			MessageBox(NULL, L"Couldn't read", L"Error", MB_ICONERROR);
-			return -1;
-		}
-
-		MessageBoxA(NULL, buf, "Thing", NULL);*/
 	}
 #endif
 	// register window classes
@@ -216,6 +205,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
 			}
 		}
 #endif
+
+		if (APP_THROTTLING) {
+			Sleep(REFRESH_RATE);
+		}
 	}
 
 	exit_program:
@@ -230,15 +223,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
 
 	APP_END();
 
-	//CloseHandle(Stdout_r);
-	//CloseHandle(Stdout_w);
-	//_close(_stdoutfd);
-
 	return (int)msg.wParam;
-}
-
-LRESULT CALLBACK TextboxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -249,6 +234,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 #ifndef LUAHK_CONSOLE
 	case WM_CREATE:
 	{
+		// create EDIT control used for displaying stdout
 		RECT rcClient;
 		GetClientRect(hwnd, &rcClient);
 
@@ -280,6 +266,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 		return 0;
 	}
 
+	// tray icon interaction
 	case WM_APP + 1:
 		switch (lParam) {
 		case WM_LBUTTONDOWN:
@@ -297,6 +284,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
 		return 0;
 
+	// message sent whenever there is a new message in stdout
 	case WM_APP + 2:
 	{
 		std::wstring wide = UnicodeConverter.from_bytes((char*)wParam, (char*)wParam + (size_t)lParam);
@@ -356,6 +344,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
+// keyboardProc for the hook
 LRESULT keyboardProc(int code, WPARAM wParam, LPARAM lParam) {
 	if (code >= 0) {
 		int state = 0; // 0 = down, 1 = up

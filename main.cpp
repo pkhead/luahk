@@ -7,6 +7,8 @@
 
 #include "config.h"
 
+bool APP_THROTTLING = true;
+
 struct hotkey_up_config {
 	UINT fsModifiers;
 	UINT vk;
@@ -759,16 +761,10 @@ LUAFUNC(_luaIsDown, L) {
 	}
 }
 
-/*
-static int resumeThread(lua_State* L, int nargs) {
-	int nres;
-	int res;
-	if ((res = lua_resume(L, g_L, nargs, &nres)) > LUA_YIELD) {
-		error(L);
-	}
-	return res;
+LUAFUNC(_luaSetThrottle, L) {
+	APP_THROTTLING = lua_toboolean(L, 1);
+	return 0;
 }
-*/
 
 static const luaL_Reg osLib[] = {
 	{"tick", _luaTick},
@@ -786,6 +782,7 @@ static const luaL_Reg osLib[] = {
 	{"setclipboard", _luaSetClipboard},
 	{"getclipboard", _luaGetClipboard},
 	{"isdown", _luaIsDown},
+	{"throttle", _luaSetThrottle},
 	{NULL, NULL},
 };
 
@@ -885,15 +882,6 @@ void APP_SETUP(HWND hwnd, int argc, const char* argv[]) {
 
 		lua_setglobal(L, "args");
 
-		/*
-		// load hotkey function
-		if (luaL_loadbuffer(L, HOTKEY_SRC, strlen(HOTKEY_SRC), "hotkey") || lua_pcall(L, 0, 0, NULL)) {
-			error(L);
-			PostQuitMessage(-1);
-			return;
-		}
-		*/
-
 		luacall(L, 0, 0);
 	}
 	else {
@@ -917,20 +905,6 @@ void APP_UPDATE() {
 	}
 
 	lua_pop(L, 1);
-
-	/*
-	lua_getglobal(L, "os");
-	lua_getfield(L, -1, "update");
-
-	if (lua_isfunction(L, -1)) {
-		if (lua_pcall(L, 0, 0, NULL)) error(L);
-	}
-	else {
-		lua_pop(L, 1);
-	}
-
-	lua_pop(L, 1);
-	*/
 }
 
 void APP_HOTKEY(int id) {

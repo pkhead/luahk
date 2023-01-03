@@ -1,5 +1,5 @@
 # LuaHK
-A Windows application that allows user input simulation and monitoring with the Lua programming language.
+A Windows application that allows user input simulation and monitoring with the Lua 5.4 programming language.
 
 Run "luahk.exe" with a Lua file. Afterwards, you can interact with the process via the taskbar icon.
 "luahkc.exe" is the command-line alternative and does not create the taskbar icon.

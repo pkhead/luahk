@@ -18,6 +18,14 @@ Only 64-bit builds are configured properly. There are four configurations:
 Debug and Release correspond to "luahk.exe", and Debug Console and Release with Console correspond to "luahkc.exe"
 
 # Documentation
+`void os.throttle(boolean throttle)`
+
+If set to `true`, the program will begin sleeping for a few milliseconds after a message in the Windows message queue has been processed. This will lower CPU time.
+
+This is set to true by default.
+
+The wait is 8 milliseconds, about 120 Hz, but this can be changed in config.h
+
 `void os.tick()`
 
 Returns the time that has passed since the application started.
@@ -25,6 +33,10 @@ Returns the time that has passed since the application started.
 `void os.setcursor(number x, number y)`
 
 Moves the cursor to the specified `x` and `y` coordinates on screen.
+
+`void os.movecursor(number dx, number dy)`
+
+Moves the cursor by `dx` and `dy`.
 
 `number, number os.getcursor()`
 
@@ -38,13 +50,15 @@ Sleeps for the specified milliseconds.
 
 Registers a hotkey for a callback.
 
-The hotkey is formatted such that it starts with a key combination, with each key separated by a "+", and keywords specified after.
+The hotkey is formatted such that it starts with a key combination, with each key separated by a "+". Spaces are not allowed between each key. Keywords are specified after.
 
 The supported keywords are as follows:
 |Keyword|Function|
 |-------|--------|
 |`up`|Fires the callback when the hotkey is released|
 |`once`|Does not repeat the callback when it is held down|
+
+Example hotkey strings are `numpad7`, `shift+f up`, and `win+lbracket once`.
 
 `number os.send(string inputs...)`
 
@@ -82,7 +96,7 @@ Returns true if the key is down, and false if it isn't.
 
 ## Task Library
 
-The runtime comes with a library that allows non-blocking sleep.
+The runtime comes with a library that allows quick coroutine creation and non-blocking sleep.
 
 `void task.spawn(function func, arguments...)`
 
